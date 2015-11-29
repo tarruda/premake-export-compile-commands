@@ -29,6 +29,7 @@ function m.getCommonFlags(cfg)
   -- can't use toolset.getincludedirs because some tools that consume
   -- compile_commands.json have problems with relative include paths
   flags = table.join(flags, m.getIncludeDirs(cfg))
+  flags = table.join(flags, toolset.getcflags(cfg))
   return table.join(flags, cfg.buildoptions)
 end
 
@@ -61,8 +62,9 @@ function m.includeFile(prj, node, depth)
 end
 
 function m.getConfig(prj)
-  if _OPTIONS['config'] then
-    return project.getconfig(prj, _OPTIONS['config'], _OPTIONS['platform'])
+  if _OPTIONS['export-compile-commands-config'] then
+    return project.getconfig(prj, _OPTIONS['export-compile-commands-config'],
+      _OPTIONS['export-compile-commands-platform'])
   end
   for cfg in project.eachconfig(prj) do
     -- just use the first configuration which is usually "Debug"
@@ -74,7 +76,8 @@ function m.getProjectCommands(prj)
   local tr = project.getsourcetree(prj)
   local cfg = m.getConfig(prj)
   if not cfg then
-    local cfg, plat = _OPTIONS['config'], _OPTIONS['platform']
+    local cfg, plat = _OPTIONS['export-compile-commands-config'],
+                      _OPTIONS['export-compile-commands-platform']
     if plat then
       p.warn('No configuration %s/%s for project %s', cfg, plat, prj.name)
     else
@@ -82,9 +85,6 @@ function m.getProjectCommands(prj)
     end
     return
   end
-  local toolset = m.getToolset(cfg)
-  local flags = table.join(common_flags, toolset.getcppflags(cfg))
-  flags = table.join(common_flags, toolset.getcflags(cfg), cfg.buildoptions)
   local cmds = {}
   p.tree.traverse(tr, {
     onleaf = function(node, depth)
@@ -103,7 +103,8 @@ local function execute()
     for prj in workspace.eachproject(wks) do
       wksCmds = table.join(wksCmds, m.getProjectCommands(prj))
     end
-    local outfile = _OPTIONS['output-file'] or 'compile_commands.json'
+    local outfile =
+      _OPTIONS['export-compile-commands-output'] or 'compile_commands.json'
     p.generate(wks, outfile, function(wks)
       local jsonCmds = {}
       for i = 1, #wksCmds do
@@ -132,19 +133,19 @@ newaction {
 }
 
 newoption {
-  trigger = 'config',
+  trigger = 'export-compile-commands-config',
   value = nil,
   description = 'Configuration to use for compile_commands.json'
 }
 
 newoption {
-  trigger = 'platform',
+  trigger = 'export-compile-commands-platform',
   value = nil,
   description = 'Platform to use for compile_commands.json'
 }
 
 newoption {
-  trigger = 'output-file',
+  trigger = 'export-compile-commands-output',
   description = 'Output file to use instead of compile_commands.json'
 }
 

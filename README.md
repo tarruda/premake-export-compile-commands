@@ -24,13 +24,13 @@ After the above steps, the "export-compile-commands" action will be available
 for your projects:
 
 ```
-premake5 export-compile-commands --config=Debug --platform=x86
+premake5 export-compile-commands --export-compile-commands-config=Debug --export-compile-commands-platform=x86
 ```
 
 By default, the above command creates a `compile_commands.json` file near your
-other generated project files, but you can override with the --output-file
-option:
+other generated project files, but you can override with the
+--export-compile-commands-output option:
 
 ```
-premake5 export-compile-commands --output-file=release_compile_commands.json --config=Release
+premake5 export-compile-commands --export-compile-commands-output=release_compile_commands.json --export-compile-commands-config=Release
 ```
