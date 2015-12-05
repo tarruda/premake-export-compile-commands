@@ -72,19 +72,8 @@ function m.getConfig(prj)
   end
 end
 
-function m.getProjectCommands(prj)
+function m.getProjectCommands(prj, cfg)
   local tr = project.getsourcetree(prj)
-  local cfg = m.getConfig(prj)
-  if not cfg then
-    local cfg, plat = _OPTIONS['export-compile-commands-config'],
-                      _OPTIONS['export-compile-commands-platform']
-    if plat then
-      p.warn('No configuration %s/%s for project %s', cfg, plat, prj.name)
-    else
-      p.warn('No configuration %s for project %s', cfg, prj.name)
-    end
-    return
-  end
   local cmds = {}
   p.tree.traverse(tr, {
     onleaf = function(node, depth)
@@ -99,30 +88,37 @@ end
 
 local function execute()
   for wks in p.global.eachWorkspace() do
-    local wksCmds = {}
+    local cfgCmds = {}
     for prj in workspace.eachproject(wks) do
-      wksCmds = table.join(wksCmds, m.getProjectCommands(prj))
-    end
-    local outfile =
-      _OPTIONS['export-compile-commands-output'] or 'compile_commands.json'
-    p.generate(wks, outfile, function(wks)
-      local jsonCmds = {}
-      for i = 1, #wksCmds do
-        local item = wksCmds[i]
-        table.insert(jsonCmds, string.format([[
-        {
-          "directory": "%s",
-          "file": "%s",
-          "command": "%s"
-        }]],
-        item.directory,
-        item.file,
-        item.command:gsub('\\', '\\\\'):gsub('"', '\\"')))
+      for cfg in project.eachconfig(prj) do
+        local cfgKey = string.format('%s', cfg.shortname)
+        if not cfgCmds[cfgKey] then
+          cfgCmds[cfgKey] = {}
+        end
+        cfgCmds[cfgKey] = table.join(cfgCmds[cfgKey], m.getProjectCommands(prj, cfg))
       end
-      p.w('[')
-      p.w(table.concat(jsonCmds, ',\n'))
-      p.w(']')
-    end)
+    end
+    for cfgKey,cmds in pairs(cfgCmds) do
+      local outfile = string.format('compile_commands/%s.json', cfgKey)
+      p.generate(wks, outfile, function(wks)
+        local jsonCmds = {}
+        for i = 1, #cmds do
+          local item = cmds[i]
+          table.insert(jsonCmds, string.format([[
+          {
+            "directory": "%s",
+            "file": "%s",
+            "command": "%s"
+          }]],
+          item.directory,
+          item.file,
+          item.command:gsub('\\', '\\\\'):gsub('"', '\\"')))
+        end
+        p.w('[')
+        p.w(table.concat(jsonCmds, ',\n'))
+        p.w(']')
+      end)
+    end
   end
 end
 
@@ -130,23 +126,6 @@ newaction {
   trigger = 'export-compile-commands',
   description = 'Export compiler commands in JSON Compilation Database Format',
   execute = execute
-}
-
-newoption {
-  trigger = 'export-compile-commands-config',
-  value = nil,
-  description = 'Configuration to use for compile_commands.json'
-}
-
-newoption {
-  trigger = 'export-compile-commands-platform',
-  value = nil,
-  description = 'Platform to use for compile_commands.json'
-}
-
-newoption {
-  trigger = 'export-compile-commands-output',
-  description = 'Output file to use instead of compile_commands.json'
 }
 
 return m

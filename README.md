@@ -24,13 +24,21 @@ After the above steps, the "export-compile-commands" action will be available
 for your projects:
 
 ```
-premake5 export-compile-commands --export-compile-commands-config=Debug --export-compile-commands-platform=x86
+premake5 export-compile-commands
 ```
 
-By default, the above command creates a `compile_commands.json` file near your
-other generated project files, but you can override with the
---export-compile-commands-output option:
+The `export-compile-commands` action will generate one json file per
+config/platform combination in each workspace, all under the `compile_commands`
+subdirectory. For example, say you have defined `debug` and `release`
+configurations with `x32` and `x64` platforms, the output will be something
+like:
 
 ```
-premake5 export-compile-commands --export-compile-commands-output=release_compile_commands.json --export-compile-commands-config=Release
+Generated WORKSPACE_BUILD_DIR/compile_commands/debug_x32.json...
+Generated WORKSPACE_BUILD_DIR/compile_commands/debug_x64.json...
+Generated WORKSPACE_BUILD_DIR/compile_commands/release_x32.json...
+Generated WORKSPACE_BUILD_DIR/compile_commands/release_x64.json...
 ```
+
+where each file contain the compilation commands for the corresponding
+config/platform combo.
