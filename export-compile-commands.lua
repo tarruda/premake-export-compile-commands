@@ -52,7 +52,7 @@ end
 function m.generateCompileCommand(prj, cfg, node)
   return {
     directory = prj.location,
-    file = node.abspath, 
+    file = node.abspath,
     command = 'cc '.. table.concat(m.getFileFlags(prj, cfg, node), ' ')
   }
 end
@@ -101,10 +101,10 @@ local function execute()
     for cfgKey,cmds in pairs(cfgCmds) do
       local outfile = string.format('compile_commands/%s.json', cfgKey)
       p.generate(wks, outfile, function(wks)
-        local jsonCmds = {}
+        p.w('[')
         for i = 1, #cmds do
           local item = cmds[i]
-          table.insert(jsonCmds, string.format([[
+          local command = string.format([[
           {
             "directory": "%s",
             "file": "%s",
@@ -112,10 +112,12 @@ local function execute()
           }]],
           item.directory,
           item.file,
-          item.command:gsub('\\', '\\\\'):gsub('"', '\\"')))
+          item.command:gsub('\\', '\\\\'):gsub('"', '\\"'))
+          if i > 1 then
+            p.w(',')
+          end
+          p.w(command)
         end
-        p.w('[')
-        p.w(table.concat(jsonCmds, ',\n'))
         p.w(']')
       end)
     end
