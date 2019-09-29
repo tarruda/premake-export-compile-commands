@@ -21,7 +21,7 @@ function m.getIncludeDirs(cfg)
   return flags
 end
 
-function m.getCommonFlags(cfg)
+function m.getCommonFlags(prj, cfg)
   local toolset = m.getToolset(cfg)
   local flags = toolset.getcppflags(cfg)
   flags = table.join(flags, toolset.getdefines(cfg.defines))
@@ -29,7 +29,12 @@ function m.getCommonFlags(cfg)
   -- can't use toolset.getincludedirs because some tools that consume
   -- compile_commands.json have problems with relative include paths
   flags = table.join(flags, m.getIncludeDirs(cfg))
-  flags = table.join(flags, toolset.getcflags(cfg))
+  flags = table.join(flags, toolset.getforceincludes(cfg))
+  if project.iscpp(prj) then
+    flags = table.join(flags, toolset.getcxxflags(cfg))
+  else
+    flags = table.join(flags, toolset.getcflags(cfg))
+  end
   return table.join(flags, cfg.buildoptions)
 end
 
@@ -42,7 +47,7 @@ function m.getDependenciesPath(prj, cfg, node)
 end
 
 function m.getFileFlags(prj, cfg, node)
-  return table.join(m.getCommonFlags(cfg), {
+  return table.join(m.getCommonFlags(prj, cfg), {
     '-o', m.getObjectPath(prj, cfg, node),
     '-MF', m.getDependenciesPath(prj, cfg, node),
     '-c', node.abspath
@@ -50,10 +55,17 @@ function m.getFileFlags(prj, cfg, node)
 end
 
 function m.generateCompileCommand(prj, cfg, node)
+  local toolset = m.getToolset(cfg)
+  if project.iscpp(prj) then
+    command = toolset.tools['cxx']
+  else
+    command = toolset.tools['cc']
+  end
+
   return {
     directory = prj.location,
     file = node.abspath,
-    command = 'cc '.. table.concat(m.getFileFlags(prj, cfg, node), ' ')
+    command = command .. ' '.. table.concat(m.getFileFlags(prj, cfg, node), ' ')
   }
 end
 
