@@ -59,17 +59,6 @@ function m.includeFile(prj, node, depth)
   return path.iscppfile(node.abspath)
 end
 
-function m.getConfig(prj)
-  if _OPTIONS['export-compile-commands-config'] then
-    return project.getconfig(prj, _OPTIONS['export-compile-commands-config'],
-      _OPTIONS['export-compile-commands-platform'])
-  end
-  for cfg in project.eachconfig(prj) do
-    -- just use the first configuration which is usually "Debug"
-    return cfg
-  end
-end
-
 function m.getProjectCommands(prj, cfg)
   local tr = project.getsourcetree(prj)
   local cmds = {}
