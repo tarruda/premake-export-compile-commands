@@ -51,12 +51,12 @@ function m.generateCompileCommand(prj, cfg, node)
   return {
     directory = prj.location,
     file = node.abspath,
-    command = 'cc '.. table.concat(m.getFileFlags(prj, cfg, node), ' ')
+    command = (path.iscfile(node.abspath) and 'cc ' or 'cxx ') .. table.concat(m.getFileFlags(prj, cfg, node), ' ')
   }
 end
 
 function m.includeFile(prj, node, depth)
-  return path.iscppfile(node.abspath)
+  return path.iscppfile(node.abspath) or path.iscfile(node.abspath)
 end
 
 function m.getProjectCommands(prj, cfg)
