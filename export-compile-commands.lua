@@ -87,24 +87,20 @@ function m.onWorkspace(wks)
   for cfgKey,cmds in pairs(cfgCmds) do
     local outfile = string.format('%s/compile_commands.json', cfgKey)
     p.generate(wks, outfile, function(wks)
-      p.w('[')
+      p.push('[')
       for i = 1, #cmds do
         local item = cmds[i]
-        local command = string.format([[
-        {
-          "directory": "%s",
-          "file": "%s",
-          "command": "%s"
-        }]],
-        item.directory,
-        item.file,
-        item.command:gsub('\\', '\\\\'):gsub('"', '\\"'))
-        if i > 1 then
-          p.w(',')
+        p.push('{')
+        p.x('"directory": "%s"', item.directory)
+        p.x('"file": "%s"', item.file)
+        p.w('"command": "%s"', item.command)
+        if i ~= #cmds then
+          p.pop('},')
+        else
+          p.pop('}')
         end
-        p.w(command)
       end
-      p.w(']')
+      p.pop(']')
     end)
   end
 end
