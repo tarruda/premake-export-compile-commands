@@ -10,27 +10,24 @@ function m.getToolset(cfg)
   return p.tools[cfg.toolset or 'gcc']
 end
 
-function m.getIncludeDirs(cfg)
-  local flags = {}
-  for _, dir in ipairs(cfg.includedirs) do
-    table.insert(flags, '-I' .. p.quoted(dir))
-  end
-  for _, dir in ipairs(cfg.sysincludedir or {}) do
-    table.insert(result, '-isystem ' .. p.quoted(dir))
-  end
-  return flags
-end
+function m.getCommonFlags(prj, cfg)
+  -- some tools that consumes compile_commands.json have problems with relative include paths
+  relative = project.getrelative
+  project.getrelative = function(prj, dir) return dir end
 
-function m.getCommonFlags(cfg)
   local toolset = m.getToolset(cfg)
   local flags = toolset.getcppflags(cfg)
   flags = table.join(flags, toolset.getdefines(cfg.defines))
   flags = table.join(flags, toolset.getundefines(cfg.undefines))
-  -- can't use toolset.getincludedirs because some tools that consume
-  -- compile_commands.json have problems with relative include paths
-  flags = table.join(flags, m.getIncludeDirs(cfg))
-  flags = table.join(flags, toolset.getcflags(cfg))
-  return table.join(flags, cfg.buildoptions)
+  flags = table.join(flags, toolset.getincludedirs(cfg, cfg.includedirs, cfg.sysincludedirs))
+  if project.iscpp(prj) then
+    flags = table.join(flags, toolset.getcxxflags(cfg))
+  elseif project.isc(prj) then
+    flags = table.join(flags, toolset.getcflags(cfg))
+  end
+  flags = table.join(flags, cfg.buildoptions)
+  project.getrelative = relative
+  return flags
 end
 
 function m.getObjectPath(prj, cfg, node)
@@ -42,7 +39,7 @@ function m.getDependenciesPath(prj, cfg, node)
 end
 
 function m.getFileFlags(prj, cfg, node)
-  return table.join(m.getCommonFlags(cfg), {
+  return table.join(m.getCommonFlags(prj, cfg), {
     '-o', m.getObjectPath(prj, cfg, node),
     '-MF', m.getDependenciesPath(prj, cfg, node),
     '-c', node.abspath
