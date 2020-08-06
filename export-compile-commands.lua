@@ -20,6 +20,7 @@ function m.getCommonFlags(prj, cfg)
   flags = table.join(flags, toolset.getdefines(cfg.defines))
   flags = table.join(flags, toolset.getundefines(cfg.undefines))
   flags = table.join(flags, toolset.getincludedirs(cfg, cfg.includedirs, cfg.sysincludedirs))
+  flags = table.join(flags, toolset.getforceincludes(cfg))
   if project.iscpp(prj) then
     flags = table.join(flags, toolset.getcxxflags(cfg))
   elseif project.isc(prj) then
