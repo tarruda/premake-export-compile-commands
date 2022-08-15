@@ -15,8 +15,8 @@ function m.getIncludeDirs(cfg)
   for _, dir in ipairs(cfg.includedirs) do
     table.insert(flags, '-I' .. p.quoted(dir))
   end
-  for _, dir in ipairs(cfg.sysincludedir or {}) do
-    table.insert(result, '-isystem ' .. p.quoted(dir))
+  for _, dir in ipairs(cfg.sysincludedirs or {}) do
+    table.insert(flags, '-isystem ' .. p.quoted(dir))
   end
   return flags
 end
