@@ -13,7 +13,7 @@ end
 function m.getIncludeDirs(cfg)
   local flags = {}
   for _, dir in ipairs(cfg.includedirs) do
-    table.insert(flags, '-I' .. p.quoted(dir))
+    table.insert(flags, '-I ' .. p.quoted(dir))
   end
   for _, dir in ipairs(cfg.sysincludedir or {}) do
     table.insert(result, '-isystem ' .. p.quoted(dir))
